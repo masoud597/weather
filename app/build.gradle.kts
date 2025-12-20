@@ -45,11 +45,14 @@ android {
 }
 
 dependencies {
+    implementation(libs.recyclerview)
+    implementation(libs.cardview)
     val roomVersion = "2.6.1"
 
     implementation ("androidx.room:room-runtime:$roomVersion")
     annotationProcessor ("androidx.room:room-compiler:$roomVersion")
     implementation("com.android.volley:volley:1.2.1")
+    implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
