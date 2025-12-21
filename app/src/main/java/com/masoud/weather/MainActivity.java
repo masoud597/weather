@@ -272,7 +272,7 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(this, "Could Not Determine IP Location", Toast.LENGTH_SHORT).show();
                     }
 
-                }, error -> Toast.makeText(this, "Could Not Get Loation Due To Network Error", Toast.LENGTH_SHORT).show());
+                }, error -> Toast.makeText(this, "Could Not Get Location Due To Network Error", Toast.LENGTH_SHORT).show());
         requestQueue.add(jsonObject);
     }
 
