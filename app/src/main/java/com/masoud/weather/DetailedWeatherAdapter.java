@@ -25,8 +25,10 @@ public class DetailedWeatherAdapter extends ArrayAdapter<DetailedWeatherModel> {
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
         DetailedWeatherModel dwModel = getItem(position);
 
+        // Inflate our custom row layout
         if (convertView == null) convertView = LayoutInflater.from(getContext()).inflate(R.layout.dcw_list_row, parent, false);
 
+        // Get view references
         TextView dcwDate = convertView.findViewById(R.id.dcwDate);
         TextView dcwWeather = convertView.findViewById(R.id.dcwWeather);
         TextView dcwWeatherDesc = convertView.findViewById(R.id.dcwWeatherDesc);
@@ -35,9 +37,11 @@ public class DetailedWeatherAdapter extends ArrayAdapter<DetailedWeatherModel> {
 
 
         if (dwModel != null) {
+            // Format date in milliseconds to human readable text
             Date dateObj = new Date(dwModel.getDate() * 1000L);
             SimpleDateFormat sdf = new SimpleDateFormat("EEEE HH:mm, dd MMM", Locale.ENGLISH);
             dcwDate.setText(sdf.format(dateObj));
+
             dcwWeather.setText(dwModel.getWeatherMain());
             dcwWeatherDesc.setText(dwModel.getWeatherDesc());
             dcwEmoji.setText(dwModel.getWeatherEmoji());

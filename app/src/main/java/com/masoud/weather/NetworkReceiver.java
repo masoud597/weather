@@ -8,16 +8,16 @@ import android.net.Network;
 import android.net.NetworkCapabilities;
 
 public class NetworkReceiver extends BroadcastReceiver {
-
+    // Used to make a listener to be able to implement onNetworkAvailable and onNetworkLost method in main activity
     public interface NetworkStateListener {
         void onNetworkAvailable();
         void onNetworkLost();
     }
     private NetworkStateListener listener;
-
     public NetworkReceiver(NetworkStateListener listener) {
         this.listener = listener;
     }
+
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -30,6 +30,7 @@ public class NetworkReceiver extends BroadcastReceiver {
         }
     }
 
+    // Check if phone is connected to internet or not
     private boolean isConnected(Context context) {
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         if (cm == null) return false;

@@ -2,9 +2,11 @@ package com.masoud.weather;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
@@ -44,8 +46,10 @@ public class MainActivity extends AppCompatActivity {
 
     Database db;
 
+    // For network change BroadcastReceiver
     NetworkReceiver networkReceiver;
     public volatile boolean isRefreshing = false;
+
     // Volley request queue
     private RequestQueue requestQueue;
 
@@ -74,8 +78,10 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
+        // Get database or create instance and load all saved data
         db = Database.getInstance(this);
         loadSavedWeather();
+
         // Custom handle of back button
         OnBackPressedCallback backPressCallBack = new OnBackPressedCallback(true) {
             @Override
@@ -118,11 +124,13 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setHasFixedSize(true);
         recyclerView.setAdapter(weatherAdapter);
 
+        // For accessing location
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
         // Handle City Search List item click
         searchResults.setOnItemClickListener((parent, view, position, id) -> {
             CitySearch city = citySearchArrayList.get(position);
-            getCurrentWeatherData(city.lat, city.lon, city.name, city.country, city.state);
+            getCurrentWeatherData(city.lat, city.lon, city.name, city.country, city.state, false);
             searchResults.setVisibility(View.GONE);
         });
 
@@ -156,6 +164,7 @@ public class MainActivity extends AppCompatActivity {
             else btnSearch.setVisibility(View.GONE);
         });
 
+        // Implement custom listener we made to handle deleting items on long click
         weatherAdapter.SetOnItemLongClickListener((model, position) -> {
             db.weatherDAO().delete(model);
             weatherModelArrayList.remove(position);
@@ -163,6 +172,7 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Removed " + model.getName(), Toast.LENGTH_SHORT).show();
         });
 
+        // Implement custom listener for network change cases
         networkReceiver = new NetworkReceiver(new NetworkReceiver.NetworkStateListener() {
             @Override
             public void onNetworkAvailable() {
@@ -187,12 +197,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+    // Get all data from database
     private void loadSavedWeather() {
         weatherModelArrayList.clear();
         weatherModelArrayList.addAll(db.weatherDAO().getAllWeather());
 
         if (weatherAdapter != null) weatherAdapter.notifyDataSetChanged();
     }
+    // For accessing location if we have permission run the function to call api and if not request runtime permission access
     private void checkPermissionAndGetLocation() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             getUserCoarseLocation();
@@ -200,6 +212,8 @@ public class MainActivity extends AppCompatActivity {
             requestPermissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION);
         }
     }
+
+    // Used to ask for location permission
     private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (isGranted) {
@@ -209,6 +223,11 @@ public class MainActivity extends AppCompatActivity {
                     getIPLocation();
                 }
             });
+
+    // Used to ask for notification permission
+    private final ActivityResultLauncher<String> requestNotificationPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {});
+
+    // Get user location using gps sensor
     private void getUserCoarseLocation() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             getIPLocation();
@@ -225,12 +244,12 @@ public class MainActivity extends AppCompatActivity {
                                         String name = jsonObject.getString("name");
                                         String country = jsonObject.getString("country");
                                         String state = jsonObject.getString("state");
-                                        getCurrentWeatherData(location.getLatitude(), location.getLongitude(), name, country, state);
+                                        getCurrentWeatherData(location.getLatitude(), location.getLongitude(), name, country, state, true);
                                     } catch (JSONException e) {
-                                        getCurrentWeatherData(location.getLatitude(), location.getLongitude(), "Unknown", "##", "Unknown");
+                                        getCurrentWeatherData(location.getLatitude(), location.getLongitude(), "Unknown", "--", "Unknown", true);
                                     }
                                 }, error -> {
-                                    getCurrentWeatherData(location.getLatitude(), location.getLongitude(), "Unknown", "##", "Unknown");
+                                    getCurrentWeatherData(location.getLatitude(), location.getLongitude(), "Unknown", "--", "Unknown", true);
                         });
                         requestQueue.add(jsonArray);
                     }else {
@@ -239,6 +258,8 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
     }
+
+    // In case of gps not being available use ip geolocation
     private void getIPLocation() {
         String url = String.format(Locale.ENGLISH, "https://api.ipgeolocation.io/v2/ipgeo?apiKey=%s", "0dbb20533f014fb9aac33f8c4077bf9d");
 
@@ -252,7 +273,7 @@ public class MainActivity extends AppCompatActivity {
                         double lat = location.getDouble("latitude");
                         double lon = location.getDouble("longitude");
 
-                        getCurrentWeatherData(lat, lon, city, country, state);
+                        getCurrentWeatherData(lat, lon, city, country, state, true);
                     } catch (JSONException e) {
                         Toast.makeText(this, "Could Not Determine IP Location", Toast.LENGTH_SHORT).show();
                     }
@@ -262,6 +283,7 @@ public class MainActivity extends AppCompatActivity {
         });
         requestQueue.add(jsonObject);
     }
+
     // Pass current search text to search method
     private void getInputToSearch() {
         String searchText = inputSearch.getText().toString();
@@ -323,7 +345,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void getCurrentWeatherData(double lat, double lon, String cityName, String country, String state) {
+    // Get the locations current weather
+    private void getCurrentWeatherData(double lat, double lon, String cityName, String country, String state, Boolean isCurrentLocation) {
         String url = String.format(Locale.ENGLISH,"https://api.openweathermap.org/data/2.5/weather?lat=%f&lon=%f&units=metric&appid=%s", lat, lon, BuildConfig.API_KEY);
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
                 response -> {
@@ -349,6 +372,14 @@ public class MainActivity extends AppCompatActivity {
                             db.weatherDAO().insert(newWeather);
                         }
                         loadSavedWeather();
+                        if (isCurrentLocation) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                                    requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+                                }
+                            }
+                            startWeatherNotification(newWeather);
+                        }
 
                     } catch (JSONException e) {
                         Toast.makeText(this, "Error parsing weather", Toast.LENGTH_SHORT).show();
@@ -360,6 +391,7 @@ public class MainActivity extends AppCompatActivity {
         requestQueue.add(jsonObjectRequest);
     }
 
+    // Refresh every item that exists in the list
     private void refreshWeatherData() {
         if (isRefreshing) return;
         if (weatherModelArrayList.isEmpty()) {
@@ -424,6 +456,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // After refreshing do this
     private void finishedRefreshing(ArrayList<WeatherModel> tempWeatherData) {
         db.weatherDAO().updateAll(tempWeatherData);
         updateMainList(tempWeatherData);
@@ -431,6 +464,7 @@ public class MainActivity extends AppCompatActivity {
         isRefreshing = false;
     }
 
+    // After refresh finished add new data to the list
     private void updateMainList(ArrayList<WeatherModel> weatherData) {
         weatherModelArrayList.clear();
         weatherModelArrayList.addAll(weatherData);
@@ -481,6 +515,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Register BroadcastReceiver on activity start
     @Override
     protected void onStart() {
         super.onStart();
@@ -488,9 +523,20 @@ public class MainActivity extends AppCompatActivity {
         registerReceiver(networkReceiver, filter);
     }
 
+    // Unregister BroadcastReceiver on activity stop
     @Override
     protected void onStop() {
         super.onStop();
         if (networkReceiver != null) unregisterReceiver(networkReceiver);
+    }
+
+    // Start showing the notification
+    private void startWeatherNotification(WeatherModel model) {
+        Intent serviceIntent = new Intent(this, WeatherNotificationService.class);
+        serviceIntent.setAction(WeatherNotificationService.ACTION_START);
+        serviceIntent.putExtra("weather_model", model);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(serviceIntent);
+        else startService(serviceIntent);
     }
 }

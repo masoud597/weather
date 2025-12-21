@@ -15,12 +15,13 @@ import java.util.ArrayList;
 public class WeatherAdapter extends RecyclerView.Adapter<WeatherAdapter.WeatherViewHolder> {
     private ArrayList<WeatherModel> weatherModelArrayList;
 
-    private OnItemLongclickListener longclickListener;
+    // Listener for long clicks to delete items
+    private OnItemLongclickListener longClickListener;
 
     public WeatherAdapter(ArrayList<WeatherModel> weatherData) {
         this.weatherModelArrayList = weatherData;
     }
-    // Inflate the custom view or each item
+    // Inflate the custom view for each item
     @NonNull
     @Override
     public WeatherAdapter.WeatherViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -43,15 +44,17 @@ public class WeatherAdapter extends RecyclerView.Adapter<WeatherAdapter.WeatherV
         holder.txtTempMax.setText(String.valueOf(weatherData.getMax_temp()) + "℃");
         holder.txtTempFeels.setText(String.valueOf(weatherData.getFeels_temp()) + "℃");
 
+        // Setup on click listener to go to the detailed activity
         holder.itemView.setOnClickListener(v -> {
             Context context = v.getContext();
             Intent intent = new Intent(context, DetailedCityWeather.class);
             intent.putExtra("weather_model", weatherData);
             context.startActivity(intent);
         });
+        // Use our custom listener for long clicks on each item
         holder.itemView.setOnLongClickListener(v -> {
-            if (longclickListener != null) {
-                longclickListener.onItemLongClick(weatherData, position);
+            if (longClickListener != null) {
+                longClickListener.onItemLongClick(weatherData, position);
                 return true;
             }
             return false;
@@ -91,11 +94,12 @@ public class WeatherAdapter extends RecyclerView.Adapter<WeatherAdapter.WeatherV
         }
     }
 
+    // Listener for long clicks to delete items
     public interface OnItemLongclickListener {
         void onItemLongClick(WeatherModel model, int position);
     }
     public void SetOnItemLongClickListener(OnItemLongclickListener listener){
-        this.longclickListener = listener;
+        this.longClickListener = listener;
     }
 
 

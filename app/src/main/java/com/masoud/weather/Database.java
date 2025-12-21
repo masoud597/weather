@@ -7,10 +7,12 @@ import androidx.room.RoomDatabase;
 
 @androidx.room.Database(entities = {WeatherModel.class}, version = 1)
 public abstract class Database extends RoomDatabase {
-    public abstract WeatherDAO weatherDAO();
 
+
+    public abstract WeatherDAO weatherDAO();
     private static Database instance;
 
+    // Method to build database or if it exists get the instance of the database
     public static synchronized Database getInstance(Context context){
         if (instance == null) {
             instance = Room.databaseBuilder(context.getApplicationContext(), Database.class, "weather_db")

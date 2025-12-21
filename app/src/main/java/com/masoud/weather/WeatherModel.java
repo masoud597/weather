@@ -5,6 +5,7 @@ import androidx.room.PrimaryKey;
 
 import java.io.Serializable;
 
+// Used the entire class for Sqlite table design
 @Entity(tableName = "weather")
 public class WeatherModel implements Serializable {
 

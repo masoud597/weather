@@ -27,10 +27,15 @@ import java.util.ArrayList;
 import java.util.Locale;
 
 public class DetailedCityWeather extends AppCompatActivity {
+
+    // For listview
     ListView dcwList;
     DetailedWeatherAdapter detailedWeatherAdapter;
     ArrayList<DetailedWeatherModel> detailedWeatherModelArrayList = new ArrayList<>();
+
+    // The weather that we clicked on
     WeatherModel clickedWeather;
+
     Button dcwRetry;
     ProgressBar dcwProgressBar;
 
@@ -45,31 +50,39 @@ public class DetailedCityWeather extends AppCompatActivity {
             return insets;
         });
 
-
+        // Get data that we passed to this activity from main activity
         Intent intent = getIntent();
         if (intent != null && intent.getSerializableExtra("weather_model") != null) {
             clickedWeather = (WeatherModel) intent.getSerializableExtra("weather_model");
         }
+
+        // Get view references
         TextView dcwCountry = findViewById(R.id.dcwCountry);
         TextView dcwCity = findViewById(R.id.dcwCity);
         TextView dcwState = findViewById(R.id.dcwState);
+        dcwRetry = findViewById(R.id.dcwRetry);
+        dcwProgressBar = findViewById(R.id.dcwProgressBar);
+        dcwList = findViewById(R.id.dcwList);
+
+
         dcwCountry.setText(clickedWeather.getCountry());
         dcwCity.setText(clickedWeather.getName());
         dcwState.setText(clickedWeather.getState());
 
-        dcwRetry = findViewById(R.id.dcwRetry);
-        dcwProgressBar = findViewById(R.id.dcwProgressBar);
-        dcwList = findViewById(R.id.dcwList);
+        // Setup adapter for listview
         detailedWeatherAdapter = new DetailedWeatherAdapter(this, detailedWeatherModelArrayList);
         dcwList.setAdapter(detailedWeatherAdapter);
+        // Call api to get data
         getWeather();
 
+        // Retry button that shows on api fails
         dcwRetry.setOnClickListener(v -> {
             dcwRetry.setVisibility(View.GONE);
             dcwProgressBar.setVisibility(View.VISIBLE);
             getWeather();
         });
     }
+    // Function to get weather data for every 6 hours in the next 5 days
     private void getWeather() {
         String url = String.format(Locale.ENGLISH, "https://api.openweathermap.org/data/2.5/forecast?lat=%f&lon=%f&units=metric&appid=%s", clickedWeather.getLat(), clickedWeather.getLon(), BuildConfig.API_KEY);
 

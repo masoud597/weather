@@ -22,6 +22,7 @@ public interface WeatherDAO {
     @Query("SELECT * FROM weather")
     List<WeatherModel> getAllWeather();
 
+    // Used to check if a city already exists before adding it in the list
     @Query("SELECT * FROM weather where name = :name AND country = :country AND state = :state LIMIT 1")
     WeatherModel getCity(String name, String country, String state);
 
