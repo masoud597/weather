@@ -135,14 +135,10 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Search on button click
-        btnSearch.setOnClickListener(v -> {
-            getInputToSearch();
-        });
+        btnSearch.setOnClickListener(v -> getInputToSearch());
 
         // Get users current location after button press
-        btnGetLocation.setOnClickListener(v -> {
-            checkPermissionAndGetLocation();
-        });
+        btnGetLocation.setOnClickListener(v -> checkPermissionAndGetLocation());
 
         // Refresh current list of cities
         btnRefresh.setOnClickListener(v -> {
@@ -248,9 +244,7 @@ public class MainActivity extends AppCompatActivity {
                                     } catch (JSONException e) {
                                         getCurrentWeatherData(location.getLatitude(), location.getLongitude(), "Unknown", "--", "Unknown", true);
                                     }
-                                }, error -> {
-                                    getCurrentWeatherData(location.getLatitude(), location.getLongitude(), "Unknown", "--", "Unknown", true);
-                        });
+                                }, error -> getCurrentWeatherData(location.getLatitude(), location.getLongitude(), "Unknown", "--", "Unknown", true));
                         requestQueue.add(jsonArray);
                     }else {
                         Toast.makeText(this, "Gps Location Not Found, Using Approximate IP Location", Toast.LENGTH_SHORT).show();
@@ -278,15 +272,13 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(this, "Could Not Determine IP Location", Toast.LENGTH_SHORT).show();
                     }
 
-                }, error -> {
-            Toast.makeText(this, "Could Not Get Loation Due To Network Error", Toast.LENGTH_SHORT).show();
-        });
+                }, error -> Toast.makeText(this, "Could Not Get Loation Due To Network Error", Toast.LENGTH_SHORT).show());
         requestQueue.add(jsonObject);
     }
 
     // Pass current search text to search method
     private void getInputToSearch() {
-        String searchText = inputSearch.getText().toString();
+        String searchText = (inputSearch.getText() != null) ? inputSearch.getText().toString() : "";
         if (!searchText.isEmpty()) {
             pbSearch.setVisibility(View.VISIBLE);
             searchCity(inputSearch.getText().toString());
@@ -385,9 +377,7 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(this, "Error parsing weather", Toast.LENGTH_SHORT).show();
                     }
                 },
-                error -> {
-                    Toast.makeText(this, "Network Error", Toast.LENGTH_SHORT).show();
-        });
+                error -> Toast.makeText(this, "Network Error", Toast.LENGTH_SHORT).show());
         requestQueue.add(jsonObjectRequest);
     }
 

@@ -13,7 +13,7 @@ public class NetworkReceiver extends BroadcastReceiver {
         void onNetworkAvailable();
         void onNetworkLost();
     }
-    private NetworkStateListener listener;
+    private final NetworkStateListener listener;
     public NetworkReceiver(NetworkStateListener listener) {
         this.listener = listener;
     }

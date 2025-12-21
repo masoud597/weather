@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 
 public class WeatherAdapter extends RecyclerView.Adapter<WeatherAdapter.WeatherViewHolder> {
-    private ArrayList<WeatherModel> weatherModelArrayList;
+    private final ArrayList<WeatherModel> weatherModelArrayList;
 
     // Listener for long clicks to delete items
     private OnItemLongclickListener longClickListener;
@@ -33,16 +33,16 @@ public class WeatherAdapter extends RecyclerView.Adapter<WeatherAdapter.WeatherV
     public void onBindViewHolder(@NonNull WeatherAdapter.WeatherViewHolder holder, int position) {
         WeatherModel weatherData = weatherModelArrayList.get(position);
 
-        holder.txtTemp.setText(String.valueOf(weatherData.getTemp()) + "℃");
+        holder.txtTemp.setText(weatherData.getTemp() + "℃");
         holder.txtEmoji.setText(weatherData.getWeather_emoji());
         holder.txtCountry.setText(weatherData.getCountry());
         holder.txtCity.setText(weatherData.getName());
         holder.txtState.setText(weatherData.getState());
         holder.txtWeather.setText(weatherData.getWeather());
         holder.txtWeatherDesc.setText(weatherData.getWeather_description());
-        holder.txtTempMin.setText(String.valueOf(weatherData.getMin_temp()) + "℃");
-        holder.txtTempMax.setText(String.valueOf(weatherData.getMax_temp()) + "℃");
-        holder.txtTempFeels.setText(String.valueOf(weatherData.getFeels_temp()) + "℃");
+        holder.txtTempMin.setText(weatherData.getMin_temp() + "℃");
+        holder.txtTempMax.setText(weatherData.getMax_temp() + "℃");
+        holder.txtTempFeels.setText(weatherData.getFeels_temp() + "℃");
 
         // Setup on click listener to go to the detailed activity
         holder.itemView.setOnClickListener(v -> {

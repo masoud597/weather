@@ -126,13 +126,10 @@ public class WeatherNotificationService extends Service {
                         showNotification(temp, emoji);
 
                     } catch (JSONException e) {
-                        Toast.makeText(this, "Failed Parsing Weather", Toast.LENGTH_SHORT).show();;
+                        Toast.makeText(this, "Failed Parsing Weather", Toast.LENGTH_SHORT).show();
                     }
                 },
-                error -> {
-                    Toast.makeText(this, "Failed To Refresh", Toast.LENGTH_SHORT).show();
-                }
-        );
+                error -> Toast.makeText(this, "Failed To Refresh", Toast.LENGTH_SHORT).show());
 
         Volley.newRequestQueue(this).add(jsonObjectRequest);
     }

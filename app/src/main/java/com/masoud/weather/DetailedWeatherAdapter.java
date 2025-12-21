@@ -45,7 +45,7 @@ public class DetailedWeatherAdapter extends ArrayAdapter<DetailedWeatherModel> {
             dcwWeather.setText(dwModel.getWeatherMain());
             dcwWeatherDesc.setText(dwModel.getWeatherDesc());
             dcwEmoji.setText(dwModel.getWeatherEmoji());
-            dcwMin.setText(String.valueOf(dwModel.getTemp()) + "℃");
+            dcwMin.setText(dwModel.getTemp() + "℃");
         }
 
         return convertView;

@@ -12,18 +12,18 @@ public class WeatherModel implements Serializable {
     @PrimaryKey(autoGenerate = true)
     private int id;
 
-    private String name;
-    private String country;
-    private String state;
-    private String weather;
-    private String weather_description;
-    private String weather_emoji;
-    private double lat;
-    private double lon;
-    private int temp;
-    private int min_temp;
-    private int max_temp;
-    private int feels_temp;
+    private final String name;
+    private final String country;
+    private final String state;
+    private final String weather;
+    private final String weather_description;
+    private final String weather_emoji;
+    private final double lat;
+    private final double lon;
+    private final int temp;
+    private final int min_temp;
+    private final int max_temp;
+    private final int feels_temp;
 
     public WeatherModel(String name, String country, String state, String weather, String weather_description, String weather_emoji, double lat, double lon, int temp, int min_temp, int max_temp, int feels_temp) {
         this.name = name;
