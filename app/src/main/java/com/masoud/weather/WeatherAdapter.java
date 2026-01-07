@@ -44,21 +44,7 @@ public class WeatherAdapter extends RecyclerView.Adapter<WeatherAdapter.WeatherV
         holder.txtTempMax.setText(weatherData.getMax_temp() + "℃");
         holder.txtTempFeels.setText(weatherData.getFeels_temp() + "℃");
 
-        // Setup on click listener to go to the detailed activity
-        holder.itemView.setOnClickListener(v -> {
-            Context context = v.getContext();
-            Intent intent = new Intent(context, DetailedCityWeather.class);
-            intent.putExtra("weather_model", weatherData);
-            context.startActivity(intent);
-        });
-        // Use our custom listener for long clicks on each item
-        holder.itemView.setOnLongClickListener(v -> {
-            if (longClickListener != null) {
-                longClickListener.onItemLongClick(weatherData, position);
-                return true;
-            }
-            return false;
-        });
+
 
     }
     // Return list size
@@ -67,7 +53,7 @@ public class WeatherAdapter extends RecyclerView.Adapter<WeatherAdapter.WeatherV
         return (weatherModelArrayList != null) ? weatherModelArrayList.size() : 0;
     }
     // Get references to every component
-    public static class WeatherViewHolder extends RecyclerView.ViewHolder {
+    public class WeatherViewHolder extends RecyclerView.ViewHolder {
         public TextView txtTemp;
         public TextView txtEmoji;
         public TextView txtCountry;
@@ -81,6 +67,27 @@ public class WeatherAdapter extends RecyclerView.Adapter<WeatherAdapter.WeatherV
 
         public WeatherViewHolder(@NonNull View itemView) {
             super(itemView);
+            // Setup on click listener to go to the detailed activity
+            itemView.setOnClickListener(v -> {
+                int position = getBindingAdapterPosition();
+                if (position != RecyclerView.NO_POSITION) {
+                    WeatherModel data = weatherModelArrayList.get(position);
+                    Context context = v.getContext();
+                    Intent intent = new Intent(context, DetailedCityWeather.class);
+                    intent.putExtra("weather_model", data);
+                    context.startActivity(intent);
+                }
+
+            });
+            // Use our custom listener for long clicks on each item
+            itemView.setOnLongClickListener(v -> {
+                int position = getBindingAdapterPosition();
+                if (longClickListener != null && position != RecyclerView.NO_POSITION) {
+                    longClickListener.onItemLongClick(weatherModelArrayList.get(position), position);
+                    return true;
+                }
+                return false;
+            });
             txtTemp = itemView.findViewById(R.id.txtTemp);
             txtEmoji = itemView.findViewById(R.id.txtEmoji);
             txtCountry = itemView.findViewById(R.id.txtCountry);

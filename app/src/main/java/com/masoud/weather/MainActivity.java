@@ -41,6 +41,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -67,6 +69,8 @@ public class MainActivity extends AppCompatActivity {
 
     // For accessing location
     private FusedLocationProviderClient fusedLocationClient;
+
+    private final ExecutorService backgroundExecutor = Executors.newSingleThreadExecutor();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -163,7 +167,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Implement custom listener we made to handle deleting items on long click
         weatherAdapter.SetOnItemLongClickListener((model, position) ->
-            new Thread(() -> {
+            backgroundExecutor.execute(() -> {
                 db.weatherDAO().delete(model);
 
 
@@ -176,7 +180,7 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                 });
-            }).start()
+            })
         );
 
         // Implement custom listener for network change cases
@@ -216,14 +220,14 @@ public class MainActivity extends AppCompatActivity {
     // Get all data from database
     private void loadSavedWeather() {
 
-        new Thread(() -> {
+        backgroundExecutor.execute(() -> {
             ArrayList<WeatherModel> data = (ArrayList<WeatherModel>) db.weatherDAO().getAllWeather();
             runOnUiThread(() -> {
                 weatherModelArrayList.clear();
                 weatherModelArrayList.addAll(data);
                 if (weatherAdapter != null) weatherAdapter.notifyDataSetChanged();
             });
-        }).start();
+        });
 
 
     }
@@ -382,7 +386,7 @@ public class MainActivity extends AppCompatActivity {
                         int maxTemp = (int) temps.getDouble("temp_max");
 
                         WeatherModel newWeather = new WeatherModel(cityName, country, state, weatherMain, weatherDesc, weatherEmoji, lat, lon, temp, minTemp, maxTemp, feelsLike);
-                        new Thread(() -> {
+                        backgroundExecutor.execute(() -> {
                             WeatherModel existing = db.weatherDAO().getCity(cityName, country, state);
 
                             if (existing != null) {
@@ -392,7 +396,7 @@ public class MainActivity extends AppCompatActivity {
                                 db.weatherDAO().insert(newWeather);
                             }
                             loadSavedWeather();
-                        }).start();
+                        });
 
 
                         if (isCurrentLocation) {
@@ -479,7 +483,7 @@ public class MainActivity extends AppCompatActivity {
 
     // After refreshing do this
     private void finishedRefreshing(ArrayList<WeatherModel> tempWeatherData) {
-        new Thread(() -> db.weatherDAO().updateAll(tempWeatherData)).start();
+        backgroundExecutor.execute(() -> db.weatherDAO().updateAll(tempWeatherData));
         updateMainList(tempWeatherData);
         pbSearch.setVisibility(View.GONE);
         isRefreshing = false;
