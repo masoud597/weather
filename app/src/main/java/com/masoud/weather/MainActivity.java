@@ -47,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
     Database db;
 
     // For network change BroadcastReceiver
+    private Boolean isLastStateConnected = null;
     NetworkReceiver networkReceiver;
     public volatile boolean isRefreshing = false;
 
@@ -162,10 +163,20 @@ public class MainActivity extends AppCompatActivity {
 
         // Implement custom listener we made to handle deleting items on long click
         weatherAdapter.SetOnItemLongClickListener((model, position) -> {
-            db.weatherDAO().delete(model);
-            weatherModelArrayList.remove(position);
-            weatherAdapter.notifyItemRemoved(position);
-            Toast.makeText(this, "Removed " + model.getName(), Toast.LENGTH_SHORT).show();
+            new Thread(() -> {
+                db.weatherDAO().delete(model);
+
+
+                runOnUiThread(() -> {
+                    if (position >= 0 && position < weatherModelArrayList.size()) {
+                        weatherModelArrayList.remove(position);
+                        weatherAdapter.notifyItemRemoved(position);
+                        weatherAdapter.notifyItemRangeChanged(position, weatherModelArrayList.size());
+                        Toast.makeText(this, "Removed " + model.getName(), Toast.LENGTH_SHORT).show();
+                    }
+
+                });
+            }).start();
         });
 
         // Implement custom listener for network change cases
@@ -173,32 +184,48 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onNetworkAvailable() {
                 txtNoNetwork.setVisibility(View.GONE);
-                if (!weatherModelArrayList.isEmpty()) {
-                    pbSearch.setVisibility(View.VISIBLE);
-                    refreshWeatherData();
-                } else {
-                    Toast.makeText(MainActivity.this, "Back Online", Toast.LENGTH_SHORT).show();
+
+                if (isLastStateConnected == null || !isLastStateConnected) {
+                    if (!weatherModelArrayList.isEmpty()) {
+                        pbSearch.setVisibility(View.VISIBLE);
+                        refreshWeatherData();
+                    } else {
+                        Toast.makeText(MainActivity.this, "Back Online", Toast.LENGTH_SHORT).show();
+                    }
                 }
+                isLastStateConnected = true;
+
             }
 
             @Override
             public void onNetworkLost() {
-                if (weatherModelArrayList.isEmpty()) {
-                    txtNoNetwork.setText("No Network Connection Available");
-                    txtNoNetwork.setVisibility(View.VISIBLE);
-                } else {
-                    txtNoNetwork.setText("No Network Connection Available\nData Might Be Outdated");
-                    txtNoNetwork.setVisibility(View.VISIBLE);
+                if (isLastStateConnected == null || isLastStateConnected) {
+                    if (weatherModelArrayList.isEmpty()) {
+                        txtNoNetwork.setText("No Network Connection Available");
+                        txtNoNetwork.setVisibility(View.VISIBLE);
+                    } else {
+                        txtNoNetwork.setText("No Network Connection Available\nData Might Be Outdated");
+                        txtNoNetwork.setVisibility(View.VISIBLE);
+                    }
                 }
-            }
+                isLastStateConnected = false;
+                }
+
         });
     }
     // Get all data from database
     private void loadSavedWeather() {
-        weatherModelArrayList.clear();
-        weatherModelArrayList.addAll(db.weatherDAO().getAllWeather());
 
-        if (weatherAdapter != null) weatherAdapter.notifyDataSetChanged();
+        new Thread(() -> {
+            ArrayList<WeatherModel> data = (ArrayList<WeatherModel>) db.weatherDAO().getAllWeather();
+            runOnUiThread(() -> {
+                weatherModelArrayList.clear();
+                weatherModelArrayList.addAll(data);
+                if (weatherAdapter != null) weatherAdapter.notifyDataSetChanged();
+            });
+        }).start();
+
+
     }
     // For accessing location if we have permission run the function to call api and if not request runtime permission access
     private void checkPermissionAndGetLocation() {
@@ -346,7 +373,7 @@ public class MainActivity extends AppCompatActivity {
                         JSONObject weather = response.getJSONArray("weather").getJSONObject(0);
                         String weatherMain = weather.getString("main");
                         String weatherDesc = weather.getString("description");
-                        String weatherEmoji = getWeatherEmoji(weather.getString("icon"));
+                        String weatherEmoji = WeatherUtils.getWeatherEmoji(weather.getString("icon"));
 
                         JSONObject temps = response.getJSONObject("main");
                         int temp = (int) temps.getDouble("temp");
@@ -355,15 +382,19 @@ public class MainActivity extends AppCompatActivity {
                         int maxTemp = (int) temps.getDouble("temp_max");
 
                         WeatherModel newWeather = new WeatherModel(cityName, country, state, weatherMain, weatherDesc, weatherEmoji, lat, lon, temp, minTemp, maxTemp, feelsLike);
-                        WeatherModel existing = db.weatherDAO().getCity(cityName, country, state);
+                        new Thread(() -> {
+                            WeatherModel existing = db.weatherDAO().getCity(cityName, country, state);
 
-                        if (existing != null) {
-                            newWeather.setId(existing.getId());
-                            db.weatherDAO().update(newWeather);
-                        } else {
-                            db.weatherDAO().insert(newWeather);
-                        }
-                        loadSavedWeather();
+                            if (existing != null) {
+                                newWeather.setId(existing.getId());
+                                db.weatherDAO().update(newWeather);
+                            } else {
+                                db.weatherDAO().insert(newWeather);
+                            }
+                            loadSavedWeather();
+                        }).start();
+
+
                         if (isCurrentLocation) {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                                 if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -400,7 +431,7 @@ public class MainActivity extends AppCompatActivity {
                         JSONObject weather = response.getJSONArray("weather").getJSONObject(0);
                         String weatherMain = weather.getString("main");
                         String weatherDesc = weather.getString("description");
-                        String weatherEmoji = getWeatherEmoji(weather.getString("icon"));
+                        String weatherEmoji = WeatherUtils.getWeatherEmoji(weather.getString("icon"));
 
                         JSONObject temps = response.getJSONObject("main");
                         int temp = (int) temps.getDouble("temp");
@@ -448,7 +479,7 @@ public class MainActivity extends AppCompatActivity {
 
     // After refreshing do this
     private void finishedRefreshing(ArrayList<WeatherModel> tempWeatherData) {
-        db.weatherDAO().updateAll(tempWeatherData);
+        new Thread(() -> db.weatherDAO().updateAll(tempWeatherData)).start();
         updateMainList(tempWeatherData);
         pbSearch.setVisibility(View.GONE);
         isRefreshing = false;
@@ -460,49 +491,6 @@ public class MainActivity extends AppCompatActivity {
         weatherModelArrayList.addAll(weatherData);
         weatherAdapter.notifyDataSetChanged();
         Toast.makeText(this, "Refresh Finished", Toast.LENGTH_SHORT).show();
-    }
-
-    // Helper method to convert OpenWeatherMap icon codes to Emojis
-    public static String getWeatherEmoji(String iconCode) {
-        switch (iconCode) {
-            // Clear Sky
-            case "01d": return "☀️"; // Day
-            case "01n": return "🌙"; // Night
-
-            // Few Clouds
-            case "02d": return "⛅"; // Day
-            case "02n": return "☁️"; // Night
-
-            // Scattered Clouds (Same emoji for day/night)
-            case "03d":
-            case "03n": return "☁️";
-
-            // Broken Clouds (Same emoji for day/night)
-            case "04d":
-            case "04n": return "☁️";
-
-            // Shower Rain (Same emoji for day/night)
-            case "09d":
-            case "09n": return "🌧️";
-
-            // Rain
-            case "10d": return "🌦️"; // Day sun/rain
-            case "10n": return "🌧️"; // Night rain
-
-            // Thunderstorm (Same emoji for day/night)
-            case "11d":
-            case "11n": return "⛈️";
-
-            // Snow (Same emoji for day/night)
-            case "13d":
-            case "13n": return "❄️";
-
-            // Mist/Fog (Same emoji for day/night)
-            case "50d":
-            case "50n": return "🌫️";
-
-            default: return "❓"; // Unknown weather
-        }
     }
 
     // Register BroadcastReceiver on activity start

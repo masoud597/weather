@@ -121,7 +121,7 @@ public class WeatherNotificationService extends Service {
 
                         JSONObject weather = response.getJSONArray("weather").getJSONObject(0);
                         String iconCode = weather.getString("icon");
-                        String emoji = MainActivity.getWeatherEmoji(iconCode);
+                        String emoji = WeatherUtils.getWeatherEmoji(iconCode);
 
                         showNotification(temp, emoji);
 

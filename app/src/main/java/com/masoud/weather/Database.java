@@ -16,7 +16,6 @@ public abstract class Database extends RoomDatabase {
     public static synchronized Database getInstance(Context context){
         if (instance == null) {
             instance = Room.databaseBuilder(context.getApplicationContext(), Database.class, "weather_db")
-                    .allowMainThreadQueries()
                     .fallbackToDestructiveMigration()
                     .build();
         }

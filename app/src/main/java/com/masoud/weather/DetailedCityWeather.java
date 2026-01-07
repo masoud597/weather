@@ -106,7 +106,7 @@ public class DetailedCityWeather extends AppCompatActivity {
                                 JSONObject weatherObj = currentDay.getJSONArray("weather").getJSONObject(0);
                                 String weather = weatherObj.getString("main");
                                 String description = weatherObj.getString("description");
-                                String emoji = MainActivity.getWeatherEmoji(weatherObj.getString("icon"));
+                                String emoji = WeatherUtils.getWeatherEmoji(weatherObj.getString("icon"));
 
                                 detailedWeatherModelArrayList.add(new DetailedWeatherModel(date, weather, description, emoji, temp));
                             }
