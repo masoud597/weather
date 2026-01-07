@@ -336,7 +336,10 @@ public class MainActivity extends AppCompatActivity {
                                 JSONObject jsonObject = response.getJSONObject(i);
                                 String name = jsonObject.getString("name");
                                 String country = jsonObject.getString("country");
-                                String state = jsonObject.getString("state");
+                                String state = "";
+                                if (jsonObject.has("state")) {
+                                    state = jsonObject.getString("state");
+                                }
                                 double lat = jsonObject.getDouble("lat");
                                 double lon = jsonObject.getDouble("lon");
 

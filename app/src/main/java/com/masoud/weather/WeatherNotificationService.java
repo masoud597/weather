@@ -52,6 +52,8 @@ public class WeatherNotificationService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent == null) return START_NOT_STICKY;
+
         // We get the action that was passed to the intent and handle it
         if (intent != null) {
             String action = intent.getAction();
