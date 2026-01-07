@@ -162,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Implement custom listener we made to handle deleting items on long click
-        weatherAdapter.SetOnItemLongClickListener((model, position) -> {
+        weatherAdapter.SetOnItemLongClickListener((model, position) ->
             new Thread(() -> {
                 db.weatherDAO().delete(model);
 
@@ -176,8 +176,8 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                 });
-            }).start();
-        });
+            }).start()
+        );
 
         // Implement custom listener for network change cases
         networkReceiver = new NetworkReceiver(new NetworkReceiver.NetworkStateListener() {
