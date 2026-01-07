@@ -70,7 +70,10 @@ public class MainActivity extends AppCompatActivity {
     // For accessing location
     private FusedLocationProviderClient fusedLocationClient;
 
+    // For doing the database tasks in the background
     private final ExecutorService backgroundExecutor = Executors.newSingleThreadExecutor();
+
+    TextView txtEmptyState;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,6 +115,7 @@ public class MainActivity extends AppCompatActivity {
         requestQueue = Volley.newRequestQueue(this);
 
         // Get references to the views
+        txtEmptyState = findViewById(R.id.txtEmptyState);
         TextView txtNoNetwork = findViewById(R.id.txtNoNetwork);
         pbSearch = findViewById(R.id.pbSearch);
         ImageButton btnSearch = findViewById(R.id.btnSearch);
@@ -178,7 +182,7 @@ public class MainActivity extends AppCompatActivity {
                         weatherAdapter.notifyItemRangeChanged(position, weatherModelArrayList.size());
                         Toast.makeText(this, "Removed " + model.getName(), Toast.LENGTH_SHORT).show();
                     }
-
+                    checkIfListEmpty();
                 });
             })
         );
@@ -219,17 +223,15 @@ public class MainActivity extends AppCompatActivity {
     }
     // Get all data from database
     private void loadSavedWeather() {
-
         backgroundExecutor.execute(() -> {
             ArrayList<WeatherModel> data = (ArrayList<WeatherModel>) db.weatherDAO().getAllWeather();
             runOnUiThread(() -> {
                 weatherModelArrayList.clear();
                 weatherModelArrayList.addAll(data);
                 if (weatherAdapter != null) weatherAdapter.notifyDataSetChanged();
+                checkIfListEmpty();
             });
         });
-
-
     }
     // For accessing location if we have permission run the function to call api and if not request runtime permission access
     private void checkPermissionAndGetLocation() {
@@ -523,5 +525,13 @@ public class MainActivity extends AppCompatActivity {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(serviceIntent);
         else startService(serviceIntent);
+    }
+
+    private void checkIfListEmpty() {
+        if (weatherModelArrayList.isEmpty()) {
+            txtEmptyState.setVisibility(View.VISIBLE);
+        }else {
+            txtEmptyState.setVisibility(View.GONE);
+        }
     }
 }
